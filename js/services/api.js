@@ -6,7 +6,19 @@
 
 import { mockApiCall } from './mockApi.js';
 
-const API_BASE = 'https://api-agroconecta-lwm4.onrender.com/api/v1';
+const API_BASE_PROD = 'https://api-agroconecta-lwm4.onrender.com/api/v1';
+
+// En local se puede probar contra otra API: http://localhost:5520/?modo=api&api=http://localhost:8080/api/v1
+const API_BASE = (() => {
+    try {
+        const esLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
+        const param = new URLSearchParams(location.search).get('api');
+        if (esLocal && param) sessionStorage.setItem('agro_api_base', param);
+        return (esLocal && sessionStorage.getItem('agro_api_base')) || API_BASE_PROD;
+    } catch {
+        return API_BASE_PROD;
+    }
+})();
 
 /**
  * Modo de datos:
