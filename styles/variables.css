@@ -200,3 +200,6 @@
 
 /* Evita que los enlaces del menú se partan en dos líneas */
 .nav-links a { white-space: nowrap; }
+
+.demo-badge .api-ok { color: var(--color-primary-500); }
+.demo-badge:not(:has(button)) { padding-right: 14px; }

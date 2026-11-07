@@ -45,14 +45,13 @@ export function Sesion() {
                     </div>
                     <button type="submit" id="btn-login">INICIAR SESIÓN</button>
                     <p>¿No tienes cuenta? <em id="goToSignup">Registrarse</em></p>
-                    ${esModoDemo() ? `
                     <div class="demo-access">
-                        <span><i class="bi bi-lightning-charge-fill"></i> Modo demo · entra como</span>
+                        <span><i class="bi bi-lightning-charge-fill"></i> ${esModoDemo() ? 'Modo demo · entra como' : 'Cuenta de prueba'}</span>
                         <div class="demo-access-btns">
                             <button type="button" data-demo="cliente"><i class="bi bi-person"></i> Cliente</button>
-                            <button type="button" data-demo="admin"><i class="bi bi-shield-lock"></i> Administrador</button>
+                            ${esModoDemo() ? `<button type="button" data-demo="admin"><i class="bi bi-shield-lock"></i> Administrador</button>` : ''}
                         </div>
-                    </div>` : ''}
+                    </div>
                 </form>
             </div>
 

@@ -1,7 +1,7 @@
 import { Header } from "./components/header.js";
 import { Footer } from "./components/footer.js";
 import { router } from "./router.js";
-import { limpiarSesion, esModoDemo } from "./services/api.js";
+import { limpiarSesion, esModoDemo, modoEfectivo, despertarApi } from "./services/api.js";
 import { resetDemoData } from "./services/mockApi.js";
  
 
@@ -163,19 +163,35 @@ document.addEventListener("DOMContentLoaded", () => {
 // 🧪 INDICADOR DE MODO DEMO
 // ============================================================
 function setupDemoBadge() {
-    if (!esModoDemo()) return;
+    despertarApi();
+
     const badge = document.createElement("div");
     badge.className = "demo-badge";
-    badge.innerHTML = `
-        <span><i class="bi bi-lightning-charge-fill"></i> Modo demo</span>
-        <button type="button" title="Restaurar productos, pedidos y usuarios de ejemplo">Reiniciar datos</button>`;
-    badge.querySelector("button").onclick = () => {
-        if (!confirm("¿Restaurar los datos de ejemplo? Se borrarán los cambios hechos en la demo.")) return;
-        resetDemoData();
-        localStorage.removeItem("carrito");
-        limpiarSesion();
-        location.hash = "#/";
-        location.reload();
-    };
     document.body.appendChild(badge);
+
+    const pintar = () => {
+        const modo = modoEfectivo();
+        if (modo === "demo") {
+            badge.hidden = false;
+            badge.innerHTML = `
+                <span title="Datos guardados solo en este navegador"><i class="bi bi-lightning-charge-fill"></i> Modo demo</span>
+                <button type="button" title="Restaurar productos, pedidos y usuarios de ejemplo">Reiniciar datos</button>`;
+            badge.querySelector("button").onclick = () => {
+                if (!confirm("¿Restaurar los datos de ejemplo? Se borrarán los cambios hechos en la demo.")) return;
+                resetDemoData();
+                localStorage.removeItem("carrito");
+                limpiarSesion();
+                location.hash = "#/";
+                location.reload();
+            };
+        } else if (modo === "api") {
+            badge.hidden = false;
+            badge.innerHTML = `<span title="Spring Boot en Render + PostgreSQL en Supabase"><i class="bi bi-cloud-check-fill api-ok"></i> Conectado a la API</span>`;
+        } else {
+            badge.hidden = true;
+        }
+    };
+
+    pintar();
+    window.addEventListener("agro:modo", pintar);
 }

@@ -6,7 +6,7 @@
 
 import { mockApiCall } from './mockApi.js';
 
-const API_BASE_PROD = 'https://api-agroconecta-lwm4.onrender.com/api/v1';
+const API_BASE_PROD = 'https://api-agroconecta-7gyk.onrender.com/api/v1';
 
 // En local se puede probar contra otra API: http://localhost:5520/?modo=api&api=http://localhost:8080/api/v1
 const API_BASE = (() => {
@@ -27,8 +27,8 @@ const API_BASE = (() => {
  *  - 'auto' → intenta el backend real y, si no responde, pasa a demo durante la sesión.
  * Se puede forzar desde la URL con ?modo=api | ?modo=demo (se recuerda en la sesión).
  */
-const API_MODE = 'demo';
-const API_TIMEOUT_MS = 6000;
+const API_MODE = 'auto';
+const API_TIMEOUT_MS = 8000;
 
 const SESSION_KEYS = ['token', 'rol', 'email', 'nombre', 'clienteId'];
 
@@ -48,6 +48,31 @@ function modoActual() {
 
 export function esModoDemo() {
     return modoActual() === 'demo';
+}
+
+/** 'demo' | 'api' | 'auto' (auto = aún no se sabe si el servidor responde) */
+export function modoEfectivo() {
+    return modoActual();
+}
+
+function fijarModo(modo) {
+    try {
+        if (sessionStorage.getItem('agro_modo') === modo) return;
+        sessionStorage.setItem('agro_modo', modo);
+    } catch { /* sin sessionStorage */ }
+    window.dispatchEvent(new CustomEvent('agro:modo', { detail: modo }));
+}
+
+/**
+ * Render (plan gratis) apaga el servidor tras 15 min sin uso y tarda ~1-2 min en despertar.
+ * En modo 'auto' se lanza esta petición en segundo plano al cargar la página para que,
+ * aunque esta visita use la demo, el servidor quede despierto para las siguientes.
+ */
+export function despertarApi() {
+    if (modoActual() !== 'auto') return;
+    fetch(`${API_BASE}/categorias`, { mode: 'cors' })
+        .then(r => { if (r.ok && modoActual() === 'auto') fijarModo('api'); })
+        .catch(() => { /* sin conexión: se queda en demo */ });
 }
 
 /**
@@ -71,12 +96,15 @@ async function apiCall(endpoint, options = {}) {
     }
 
     try {
-        return await realApiCall(endpoint, options);
+        const data = await realApiCall(endpoint, options);
+        if (modoActual() === 'auto') fijarModo('api');
+        return data;
     } catch (error) {
-        // En modo 'auto', si el servidor no responde se continúa en demo
+        // En modo 'auto', si el servidor no responde se continúa en demo durante la sesión
         if (modoActual() === 'auto' && !error.status) {
             console.warn('[API] Backend sin respuesta, se activa el modo demo.');
-            sessionStorage.setItem('agro_modo', 'demo');
+            limpiarSesion(); // un token del servidor real no sirve en la demo
+            fijarModo('demo');
             return apiCall(endpoint, options);
         }
         throw error;

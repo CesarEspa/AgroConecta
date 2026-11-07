@@ -18,27 +18,23 @@ Plataforma de e-commerce para conectar insumos del campo (semillas, concentrados
 
 Además, las rutas de administración están protegidas por rol: un cliente no puede entrar al panel, y un administrador no puede comprar.
 
-## 🧪 Modo demo (sin servidor)
+## 🔌 API real + modo demo de respaldo
 
-El backend de producción no está desplegado de forma permanente. Para que la tienda **siempre funcione** (por ejemplo, en GitHub Pages), `js/services/mockApi.js` simula todos los endpoints de `/api/v1` descritos en [FRONTEND_API_GUIDE.md](FRONTEND_API_GUIDE.md): login, registro, productos, categorías, pedidos y usuarios. Guarda los datos en `localStorage`, valida igual que el backend (409 por stock insuficiente, 403 por rol, etc.) y aplica descuentos.
+La tienda funciona en **modo `auto`**:
 
-- En la pantalla de **Ingresar** aparecen dos botones para entrar como **Cliente** o como **Administrador** de prueba.
-- La etiqueta **Modo demo** (abajo a la izquierda) permite **reiniciar los datos** de ejemplo.
+1. Usa la **API real** ([CesarEspa/Api-AgroConecta](https://github.com/CesarEspa/Api-AgroConecta)): Spring Boot en **Render** y PostgreSQL en **Supabase**. La etiqueta de abajo a la izquierda dice **Conectado a la API**.
+2. Si el servidor no responde en 8 s (el plan gratis de Render se apaga tras 15 min sin uso y tarda 1-2 min en despertar), la visita sigue en **modo demo**: `js/services/mockApi.js` simula todos los endpoints de `/api/v1` con datos en `localStorage`. Al mismo tiempo se envía una petición para despertar el servidor, así la siguiente visita ya usa la API.
 
-### Pasar al backend real
+En la pantalla de **Ingresar** hay un botón para entrar como **cliente de prueba**. En modo demo también aparece **Administrador**, y la etiqueta **Modo demo** permite reiniciar los datos.
 
-En `js/services/api.js`:
+Configuración en `js/services/api.js`:
 
 ```js
-const API_BASE = 'https://<tu-api>/api/v1';
-const API_MODE = 'api';   // 'demo' | 'api' | 'auto'
+const API_BASE_PROD = 'https://api-agroconecta-7gyk.onrender.com/api/v1';
+const API_MODE = 'auto';   // 'demo' | 'api' | 'auto'
 ```
 
-- `api`: usa solo el backend real.
-- `auto`: intenta el backend real y, si no responde en 6 s, continúa en demo.
-- También se puede forzar desde la URL: `?modo=api` o `?modo=demo`.
-
-Las vistas no cambian: todas las llamadas pasan por `apiCall()`.
+También se puede forzar desde la URL: `?modo=api` o `?modo=demo`. En local: `?modo=api&api=http://localhost:8080/api/v1`.
 
 ## 📸 Capturas
 
@@ -111,5 +107,6 @@ Repositorio original del equipo: [DanielVega825/AgroConecta-t8-SPAs](https://git
 
 ### Pendiente
 
-- [ ] Desplegar el backend de forma permanente y cambiar `API_MODE` a `api`.
+- [x] Backend desplegado en Render + Supabase y tienda en modo `auto`.
+- [ ] Plan pago o *keep-alive* si se quiere evitar el arranque en frío de Render.
 - [ ] Sanitizar en el backend el HTML de `descripcionLong` antes de guardarlo.
