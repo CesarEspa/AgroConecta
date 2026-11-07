@@ -175,7 +175,7 @@ async function initCatalogo() {
     // ============================================================
     const render = (lista) => {
         if (lista.length === 0) {
-            contenedor.innerHTML = '<div class="text-center p-5"><p class="text-muted">No hay productos disponibles</p></div>';
+            contenedor.innerHTML = '<div class="text-center p-5"><p class="text-muted">No encontramos productos con esos filtros.</p></div>';
             return;
         }
 
@@ -368,14 +368,28 @@ async function initCatalogo() {
         });
     };
 
+    const normalizar = (t) => String(t || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+
+    const seleccionarCategoria = (categoria) => {
+        const radio = [...document.querySelectorAll('input[name="cat"]')]
+            .find(r => normalizar(r.value) === normalizar(categoria));
+        if (radio) radio.checked = true;
+    };
+    window.agroSeleccionarCategoria = (categoria) => { seleccionarCategoria(categoria); filtrar(); };
+
     const filtrar = () => {
         const cat = document.querySelector('input[name="cat"]:checked')?.value || "TODOS";
         const price = document.querySelector('input[name="price"]:checked')?.value || "ALL";
+        const termino = normalizar(document.querySelector('.contenedor-buscar input')?.value);
         
         let filtrados = todosLosProductos;
         
         if (cat !== "TODOS") {
-            filtrados = filtrados.filter(p => p.cat === cat);
+            filtrados = filtrados.filter(p => normalizar(p.cat) === normalizar(cat));
+        }
+
+        if (termino) {
+            filtrados = filtrados.filter(p => normalizar(`${p.nombre} ${p.cat} ${p.desc || ""}`).includes(termino));
         }
         
         if (price === "LOW") filtrados = filtrados.filter(p => p.precio < 50000);
@@ -428,5 +442,20 @@ async function initCatalogo() {
     // ⏱️ INICIALIZAR
     // ============================================================
     poblarCategorias();
+
+    // Filtro pendiente (viene de los enlaces de categoría del footer)
+    const pendiente = localStorage.getItem('filtro_pendiente_categoria');
+    if (pendiente) {
+        localStorage.removeItem('filtro_pendiente_categoria');
+        seleccionarCategoria(pendiente);
+    }
+
+    // Buscador del header
+    const buscador = document.querySelector('.contenedor-buscar input');
+    if (buscador) {
+        buscador.setAttribute('aria-label', 'Buscar productos');
+        buscador.addEventListener('input', filtrar);
+    }
+
     filtrar();
 }

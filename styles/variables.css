@@ -125,3 +125,78 @@
    --transition-fast: 0.2s ease-in-out;
    --transition-normal: 0.3s ease;
 }
+/* ============================================================
+   🧪 MODO DEMO
+   ============================================================ */
+.demo-badge {
+   position: fixed;
+   left: 16px;
+   bottom: 16px;
+   z-index: 1080;
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   padding: 6px 6px 6px 14px;
+   border-radius: 999px;
+   background: rgba(31, 41, 55, 0.92);
+   color: #fff;
+   font-size: 0.78rem;
+   font-weight: 600;
+   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+   backdrop-filter: blur(6px);
+}
+.demo-badge i { color: var(--color-secondary-yellow-500); }
+.demo-badge button {
+   border: 0;
+   border-radius: 999px;
+   padding: 4px 12px;
+   background: rgba(255, 255, 255, 0.14);
+   color: #fff;
+   font-size: 0.72rem;
+   font-weight: 600;
+   cursor: pointer;
+}
+.demo-badge button:hover { background: rgba(255, 255, 255, 0.26); }
+
+.demo-access {
+   margin-top: 14px;
+   padding: 12px;
+   width: 100%;
+   border: 1px dashed var(--color-primary-500);
+   border-radius: var(--border-radius-lg);
+   background: var(--color-primary-100);
+   text-align: center;
+   font-size: 0.8rem;
+   color: var(--color-gray-700);
+}
+.demo-access i { color: var(--color-primary-600); }
+.demo-access-btns {
+   display: flex;
+   gap: 8px;
+   justify-content: center;
+   margin-top: 8px;
+   flex-wrap: wrap;
+}
+.demo-access .demo-access-btns button {
+   border: 1px solid var(--color-primary-600);
+   border-radius: 999px;
+   padding: 5px 14px;
+   background: #fff;
+   color: var(--color-primary-600);
+   font-size: 0.78rem;
+   font-weight: 600;
+   cursor: pointer;
+   width: auto;
+   margin: 0;
+}
+.demo-access .demo-access-btns button:hover {
+   background: var(--color-primary-600);
+   color: #fff;
+}
+
+@media (max-width: 576px) {
+   .demo-badge { left: 8px; bottom: 8px; font-size: 0.7rem; }
+}
+
+/* Evita que los enlaces del menú se partan en dos líneas */
+.nav-links a { white-space: nowrap; }

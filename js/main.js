@@ -1,8 +1,9 @@
 import { Header } from "./components/header.js";
 import { Footer } from "./components/footer.js";
 import { router } from "./router.js";
+import { limpiarSesion, esModoDemo } from "./services/api.js";
+import { resetDemoData } from "./services/mockApi.js";
  
-console.log("main.js cargado");
 
 // ============================================================
 // 📊 ACTUALIZAR CONTADOR DEL CARRITO
@@ -26,9 +27,7 @@ export function actualizarContadorCarrito() {
 // 🎨 RENDERIZAR LAYOUT PRINCIPAL
 // ============================================================
 function renderLayout() {
-    console.log("renderLayout iniciado");
     const root = document.getElementById("root");
-    console.log("root element:", root);
  
     if (!root) {
         console.error("No se encontró el elemento #root");
@@ -40,19 +39,20 @@ function renderLayout() {
         <main id="app" class="flex-fill"></main>
         <footer id="main-footer">${Footer()}</footer>
     `;
-    console.log("renderLayout completado");
 }
 
 // ============================================================
 // 🔄 ACTUALIZAR HEADER CUANDO CAMBIA LA SESIÓN
 // ============================================================
-function updateHeader() {
-    const headerElement = document.querySelector("header");
+export function refreshHeader() {
+    const headerElement = document.getElementById("main-header");
     if (headerElement) {
-        headerElement.outerHTML = Header();
+        headerElement.innerHTML = Header();
+        setupMenu();
     }
     actualizarContadorCarrito();
 }
+const updateHeader = refreshHeader;
 
 // ============================================================
 // 🔗 CONFIGURAR FILTROS DEL FOOTER
@@ -69,15 +69,11 @@ function setupFooterFilters() {
 
             localStorage.setItem('filtro_pendiente_categoria', categoria);
 
-            if (location.hash === '#/catalogo') {
+            if (location.hash === '#/catalogo' && window.agroSeleccionarCategoria) {
                 e.preventDefault();
-                const radio = document.querySelector(`input[name="cat"][value="${categoria}"]`);
-                if (radio) {
-                    radio.checked = true;
-                    radio.dispatchEvent(new Event('change'));
-                    localStorage.removeItem('filtro_pendiente_categoria');
-                    window.scrollTo(0, 0);
-                }
+                window.agroSeleccionarCategoria(categoria);
+                localStorage.removeItem('filtro_pendiente_categoria');
+                window.scrollTo(0, 0);
             }
         };
     });
@@ -122,11 +118,7 @@ function setupMenu() {
 // ============================================================
 function setupLogout() {
     const handleLogout = (isMobile = false) => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("rol");
-        localStorage.removeItem("email");
-        localStorage.removeItem("nombre");
-        localStorage.removeItem("clienteId");
+        limpiarSesion();
         updateHeader();
         if (isMobile) {
             const nav = document.getElementById("nav-menu");
@@ -149,6 +141,7 @@ function setupLogout() {
 // 🎯 EVENT LISTENER PRINCIPAL
 // ============================================================
 window.addEventListener("hashchange", () => {
+    refreshHeader();
     router();
     setupFooterFilters();
 });
@@ -163,4 +156,26 @@ document.addEventListener("DOMContentLoaded", () => {
     setupLogout();
     setupFooterFilters();
     actualizarContadorCarrito();
+    setupDemoBadge();
 });
+
+// ============================================================
+// 🧪 INDICADOR DE MODO DEMO
+// ============================================================
+function setupDemoBadge() {
+    if (!esModoDemo()) return;
+    const badge = document.createElement("div");
+    badge.className = "demo-badge";
+    badge.innerHTML = `
+        <span><i class="bi bi-lightning-charge-fill"></i> Modo demo</span>
+        <button type="button" title="Restaurar productos, pedidos y usuarios de ejemplo">Reiniciar datos</button>`;
+    badge.querySelector("button").onclick = () => {
+        if (!confirm("¿Restaurar los datos de ejemplo? Se borrarán los cambios hechos en la demo.")) return;
+        resetDemoData();
+        localStorage.removeItem("carrito");
+        limpiarSesion();
+        location.hash = "#/";
+        location.reload();
+    };
+    document.body.appendChild(badge);
+}

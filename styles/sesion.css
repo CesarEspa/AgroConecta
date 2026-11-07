@@ -393,10 +393,20 @@ body {
 /*-----------------------------------------------*/
 
 @media (max-width: 768px) {
+    body:has(.sesion-full-page) {
+        overflow-y: auto;
+    }
+
+    .sesion-full-page {
+        box-sizing: border-box;
+        padding: 24px 12px;
+    }
+
     .card-sesion {
-        width: 400px;
+        width: min(400px, calc(100vw - 24px));
+        max-width: none;
         height: auto;
-        min-height: 700px;
+        min-height: 0;
         flex-direction: column;
     }
 

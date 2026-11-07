@@ -4,7 +4,39 @@
  * Maneja autenticación (JWT Bearer), errores globales y respuestas
  */
 
+import { mockApiCall } from './mockApi.js';
+
 const API_BASE = 'https://api-agroconecta-lwm4.onrender.com/api/v1';
+
+/**
+ * Modo de datos:
+ *  - 'demo' → backend simulado en el navegador (mockApi.js). Funciona sin servidor.
+ *  - 'api'  → backend real en API_BASE.
+ *  - 'auto' → intenta el backend real y, si no responde, pasa a demo durante la sesión.
+ * Se puede forzar desde la URL con ?modo=api | ?modo=demo (se recuerda en la sesión).
+ */
+const API_MODE = 'demo';
+const API_TIMEOUT_MS = 6000;
+
+const SESSION_KEYS = ['token', 'rol', 'email', 'nombre', 'clienteId'];
+
+export function limpiarSesion() {
+    SESSION_KEYS.forEach(k => localStorage.removeItem(k));
+}
+
+function modoActual() {
+    try {
+        const forzado = new URLSearchParams(location.search).get('modo');
+        if (forzado === 'api' || forzado === 'demo') sessionStorage.setItem('agro_modo', forzado);
+        return sessionStorage.getItem('agro_modo') || API_MODE;
+    } catch {
+        return API_MODE;
+    }
+}
+
+export function esModoDemo() {
+    return modoActual() === 'demo';
+}
 
 /**
  * Función central para hacer llamadas a la API
@@ -14,6 +46,32 @@ const API_BASE = 'https://api-agroconecta-lwm4.onrender.com/api/v1';
  * @returns {Promise<object>} Respuesta parseada como JSON
  */
 async function apiCall(endpoint, options = {}) {
+    if (esModoDemo()) {
+        try {
+            return await mockApiCall(endpoint, options);
+        } catch (error) {
+            if (error.status === 401 && !endpoint.startsWith('/auth/')) {
+                limpiarSesion();
+                window.location.hash = '#/sesion';
+            }
+            throw error;
+        }
+    }
+
+    try {
+        return await realApiCall(endpoint, options);
+    } catch (error) {
+        // En modo 'auto', si el servidor no responde se continúa en demo
+        if (modoActual() === 'auto' && !error.status) {
+            console.warn('[API] Backend sin respuesta, se activa el modo demo.');
+            sessionStorage.setItem('agro_modo', 'demo');
+            return apiCall(endpoint, options);
+        }
+        throw error;
+    }
+}
+
+async function realApiCall(endpoint, options = {}) {
     const token = localStorage.getItem('token');
 
     // Los endpoints públicos de auth NO deben enviar el token Bearer.
@@ -31,14 +89,15 @@ async function apiCall(endpoint, options = {}) {
     try {
         const response = await fetch(`${API_BASE}${endpoint}`, {
             ...options,
-            headers
+            headers,
+            signal: AbortSignal.timeout(API_TIMEOUT_MS)
         });
 
         // Manejar respuesta 401 (Token expirado o inválido)
         // Solo redirigir si NO estamos en un endpoint de autenticación,
         // ya que ahí un 401 significa credenciales incorrectas, no sesión expirada.
         if (response.status === 401 && !esEndpointPublico) {
-            localStorage.clear();
+            limpiarSesion();
             window.location.hash = '#/sesion';
             throw new Error('Sesión expirada. Inicia sesión nuevamente.');
         }
@@ -86,7 +145,7 @@ export async function registerUser(userData) {
 }
 
 export function logoutUser() {
-    localStorage.clear();
+    limpiarSesion();
     window.location.hash = '#/sesion';
 }
 

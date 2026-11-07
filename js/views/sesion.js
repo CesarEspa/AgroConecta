@@ -1,4 +1,6 @@
-import { loginUser, registerUser, guardarSesion, obtenerRol, estaAutenticado } from '../services/api.js';
+import { loginUser, registerUser, guardarSesion, obtenerRol, estaAutenticado, esModoDemo } from '../services/api.js';
+import { DEMO_USERS } from '../services/mockApi.js';
+import { refreshHeader } from '../main.js';
 
 export function Sesion() {
     return `
@@ -43,6 +45,14 @@ export function Sesion() {
                     </div>
                     <button type="submit" id="btn-login">INICIAR SESIÓN</button>
                     <p>¿No tienes cuenta? <em id="goToSignup">Registrarse</em></p>
+                    ${esModoDemo() ? `
+                    <div class="demo-access">
+                        <span><i class="bi bi-lightning-charge-fill"></i> Modo demo · entra como</span>
+                        <div class="demo-access-btns">
+                            <button type="button" data-demo="cliente"><i class="bi bi-person"></i> Cliente</button>
+                            <button type="button" data-demo="admin"><i class="bi bi-shield-lock"></i> Administrador</button>
+                        </div>
+                    </div>` : ''}
                 </form>
             </div>
 
@@ -272,6 +282,16 @@ export function gestionSesion() {
         }
     });
 
+    // ==================== ACCESO DEMO ====================
+    document.querySelectorAll("[data-demo]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const u = DEMO_USERS[btn.dataset.demo];
+            document.getElementById("loginEmail").value = u.email;
+            document.getElementById("loginPassword").value = u.password;
+            formLogin.requestSubmit();
+        });
+    });
+
     // ==================== LOGIN ====================
     if (formLogin) {
         formLogin.addEventListener("submit", async (e) => {
@@ -292,18 +312,8 @@ export function gestionSesion() {
 
                 // Guardar sesión correctamente según la guía API
                 guardarSesion(response);
-                // ✅ ACTUALIZAR HEADER INMEDIATAMENTE
-                const headerElement = document.querySelector("header");
-                if (headerElement) {
-                    const { Header } = await import('../components/header.js');
-                    headerElement.outerHTML = Header();
-                }
-
-                // Actualizar contador carrito
-                const { actualizarContadorCarrito } = await import('../main.js');
-                actualizarContadorCarrito();
-
-                alert("Inicio de sesión exitoso. Bienvenido " + response.nombre);
+                // ✅ ACTUALIZAR HEADER (y contador del carrito) INMEDIATAMENTE
+                refreshHeader();
 
                 // Redirigir según el rol
                 if (response.rol === "ADMIN") {
