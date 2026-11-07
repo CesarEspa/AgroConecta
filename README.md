@@ -56,7 +56,7 @@ Las vistas no cambian: todas las llamadas pasan por `apiCall()`.
 
 - **Frontend:** HTML5, CSS3, JavaScript ES Modules, Bootstrap 5, Bootstrap Icons.
 - **Arquitectura:** SPA con hash router propio, vistas como funciones que devuelven HTML, CSS por vista cargado dinámicamente y servicio de API centralizado.
-- **Backend (repositorio aparte):** Java 17, Spring Boot 3, Spring Security + JWT, JPA, PostgreSQL y OpenAPI ([api-agroconecta](https://github.com/idchavez/api-agroconecta)).
+- **Backend (repositorio aparte):** Java 17, Spring Boot 3, Spring Security + JWT, JPA, PostgreSQL y OpenAPI ([CesarEspa/Api-AgroConecta](https://github.com/CesarEspa/Api-AgroConecta)).
 
 ## 📁 Estructura
 
